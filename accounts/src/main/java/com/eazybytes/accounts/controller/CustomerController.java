@@ -4,17 +4,19 @@ package com.eazybytes.accounts.controller;
 import com.eazybytes.accounts.dto.CustomerDetailsDto;
 import com.eazybytes.accounts.service.ICustomerService;
 import jakarta.validation.constraints.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/api", produces = {MediaType.APPLICATION_JSON_VALUE})
 public class CustomerController {
+
+    private static final Logger logger = LoggerFactory.getLogger(CustomerController.class);
+
 
     private final ICustomerService customerService;
 
@@ -23,8 +25,10 @@ public class CustomerController {
     }
 
     @GetMapping("/fetchCustomerDetails")
-    public ResponseEntity<CustomerDetailsDto> fetchCustomerDetails(@RequestParam @Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile Number must be 10 digits") String mobileNumber){
-       CustomerDetailsDto customerDetailsDto =  customerService.fetchCustomerDetails(mobileNumber);
+    public ResponseEntity<CustomerDetailsDto> fetchCustomerDetails(@RequestHeader("eazybank-correlation-id") String correlationId, @RequestParam @Pattern(regexp = "(^$|[0-9]{10})", message = "Mobile Number must be 10 digits") String mobileNumber){
+        logger.debug("fetch Customer Details method start");
+       CustomerDetailsDto customerDetailsDto =  customerService.fetchCustomerDetails(correlationId, mobileNumber);
+        logger.debug("fetch Customer Details method end");
        return ResponseEntity.status(HttpStatus.OK).body(customerDetailsDto);
     }
 }

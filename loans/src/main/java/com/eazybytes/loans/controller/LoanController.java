@@ -9,6 +9,8 @@ import com.eazybytes.loans.service.ILoansService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,8 @@ public class LoanController {
     @Autowired
     private LoansContactInfoDto loansContactInfoDto;
 
+    private static final Logger logger = LoggerFactory.getLogger(LoanController.class);
+
     public LoanController(ILoansService iLoansService){
         this.iLoansService = iLoansService;
     }
@@ -44,8 +48,10 @@ public class LoanController {
     }
 
     @GetMapping("/fetch")
-    public ResponseEntity<LoansDto> fetchLoan(@RequestParam @Pattern(regexp="(^$|[0-9]{10})",message = "Mobile Number must be 10 digits") String mobileNumber){
+    public ResponseEntity<LoansDto> fetchLoan(@RequestHeader("eazybank-correlation-id") String correlationId, @RequestParam @Pattern(regexp="(^$|[0-9]{10})",message = "Mobile Number must be 10 digits") String mobileNumber){
+        logger.debug("fetch Loan Details method start");
         LoansDto loansDto = iLoansService.fetchLoan(mobileNumber);
+        logger.debug("fetch Loan Details method end");
         return ResponseEntity.status(HttpStatus.OK).body(loansDto);
     }
 
@@ -76,6 +82,8 @@ public class LoanController {
 
     @GetMapping("/contact-info")
     public ResponseEntity<LoansContactInfoDto> getContactInfo(){
+        logger.debug("Invoked api");
+        //throw new RuntimeException();
         return ResponseEntity.status(HttpStatus.OK).body(loansContactInfoDto);
     }
 

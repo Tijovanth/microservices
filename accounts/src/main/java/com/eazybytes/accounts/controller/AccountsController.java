@@ -5,9 +5,13 @@ import com.eazybytes.accounts.dto.AccountsContactInfoDto;
 import com.eazybytes.accounts.dto.CustomerDto;
 import com.eazybytes.accounts.dto.ResponseDto;
 import com.eazybytes.accounts.service.IAccountsService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -17,10 +21,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.TimeoutException;
+
 @RestController
 @RequestMapping(path = "/api", produces = {MediaType.APPLICATION_JSON_VALUE})
 @Validated
 public class AccountsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AccountsController.class);
 
     private final IAccountsService iAccountsService;
 
@@ -69,14 +77,27 @@ public class AccountsController {
         return null;
     }
 
+    @Retry(name = "getBuildInfo", fallbackMethod = "getBuildInfoFallBack")
     @GetMapping("/build-info")
-    public ResponseEntity<String> getBuildInfo(){
+    public ResponseEntity<String> getBuildInfo() throws TimeoutException {
+        logger.info("Invoked Build Info Api");
+        //throw new TimeoutException();
         return ResponseEntity.status(HttpStatus.OK).body(buildVersion);
     }
 
+    public ResponseEntity<String> getBuildInfoFallBack(Throwable throwable){
+        logger.info("Invoked Build Info FallBack Api");
+        return ResponseEntity.status(HttpStatus.OK).body("An error occured. Please try again after sometime");
+    }
+
+    @RateLimiter(name = "getJavaVersion", fallbackMethod = "getJavaVersionFallBack")
     @GetMapping("/java-version")
     public ResponseEntity<String> getJavaVersion(){
         return ResponseEntity.status(HttpStatus.OK).body(environment.getProperty("JAVA_HOME"));
+    }
+
+    public ResponseEntity<String> getJavaVersionFallBack(Throwable throwable){
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Attempted too many times");
     }
 
     @GetMapping("/contact-info")
