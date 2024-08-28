@@ -34,12 +34,10 @@ spring:
         updateCommunications-in-0:
           destination: communication-sent
           group: ${spring.application.name}
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    connection-timeout: 10s
+      kafka:
+        binder:
+          brokers:
+            - localhost:9092
 
 management:
   endpoints:
@@ -60,9 +58,9 @@ management:
   info:
     env:
       enabled: true
-  metrics:
-    tags:
-      application: ${spring.application.name}
+#  metrics:
+#    tags:
+#      application: ${spring.application.name}
 
 endpoints:
   shutdown:
@@ -88,8 +86,8 @@ logging:
     com:
       eazybytes:
         accounts: DEBUG
-  pattern:
-    level: "%5p[${spring.application.name},%X{trace_id},%X{span_id}]"
+#  pattern:
+#    level: "%5p[${spring.application.name},%X{trace_id},%X{span_id}]"
 
 resilience4j.circuitbreaker:
   configs:
